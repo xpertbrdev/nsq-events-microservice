@@ -3,7 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { RedisModule } from '@songkeys/nestjs-redis';
-import { ClientsModule, Transport } from '@nestjs/microservices';
+import { NsqModule } from '../nsq/nsq.module';
 
 // Controllers
 import { EventsController } from './controllers/events.controller';
@@ -63,26 +63,7 @@ const QueryHandlers = [
       }),
       inject: [ConfigService],
     }),
-    ClientsModule.registerAsync([
-      {
-        name: 'NSQ_CLIENT',
-        imports: [ConfigModule],
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.TCP,
-          options: {
-            host: configService
-              .get<string>('NSQD_TCP_ADDR', 'localhost:4150')
-              .split(':')[0],
-            port: parseInt(
-              configService
-                .get<string>('NSQD_TCP_ADDR', 'localhost:4150')
-                .split(':')[1],
-            ),
-          },
-        }),
-        inject: [ConfigService],
-      },
-    ]),
+    NsqModule,
   ],
   controllers: [EventsController, MetricsController],
   providers: [

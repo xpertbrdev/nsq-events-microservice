@@ -5,7 +5,7 @@ Módulo de gerenciamento de eventos com sessões transacionais, integração com
 ## 📋 Características
 
 - **Sessões Transacionais**: Controle explícito de início, commit e rollback
-- **Integração NSQ**: Publicação de eventos via NSQ
+- **Integração NSQ**: Publicação de eventos via NSQ com Writer/Reader nativo
 - **Sistema de Contingência**: Fallback para arquivo local em caso de falha do Redis
 - **Métricas**: Monitoramento completo com Prometheus
 - **CQRS**: Arquitetura baseada em comandos e queries
@@ -15,7 +15,7 @@ Módulo de gerenciamento de eventos com sessões transacionais, integração com
 
 - NestJS 10.x
 - Redis (ioredis)
-- NSQ (nsqjs + nest-nsq-transport)
+- NSQ (nsqjs - Writer/Reader nativo)
 - TypeScript
 - CQRS
 - Swagger/OpenAPI
@@ -49,6 +49,7 @@ REDIS_DB=0
 NSQD_TCP_ADDR=localhost:4150
 NSQLOOKUPD_HTTP_ADDR=localhost:4161
 NSQ_TOPIC=events
+NSQ_CHANNEL=events_channel
 
 # Contingency
 CONTINGENCY_FILE_PATH=./contingency-log.jsonl
@@ -144,6 +145,10 @@ GET /metrics
 ```
 events-module/
 ├── src/
+│   ├── nsq/                   # Módulo NSQ
+│   │   ├── nsq.service.ts     # Writer NSQ
+│   │   ├── nsq.consumer.ts    # Reader NSQ
+│   │   └── nsq.module.ts
 │   ├── events/
 │   │   ├── commands/          # Comandos CQRS
 │   │   ├── queries/           # Queries CQRS
@@ -163,7 +168,7 @@ events-module/
 
 1. **Iniciar Sessão**: Cliente inicia uma sessão transacional
 2. **Adicionar Eventos**: Eventos são adicionados à sessão (armazenados no Redis)
-3. **Commit**: Todos os eventos são publicados no NSQ
+3. **Commit**: Todos os eventos são publicados no NSQ via Writer
 4. **Rollback** (opcional): Cancela a sessão e descarta eventos
 
 ## 🛡️ Sistema de Contingência
@@ -199,15 +204,17 @@ npm run test:cov
 
 Para integrar este módulo em um projeto NestJS existente:
 
-1. Copie a pasta `src/events` para seu projeto
-2. Importe o `EventsModule` no seu `AppModule`:
+1. Copie as pastas `src/nsq` e `src/events` para seu projeto
+2. Importe os módulos no seu `AppModule`:
 
 ```typescript
+import { NsqModule } from './nsq/nsq.module';
 import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
     // ... outros módulos
+    NsqModule,
     EventsModule,
   ],
 })
@@ -215,6 +222,33 @@ export class AppModule {}
 ```
 
 3. Configure as variáveis de ambiente no seu `.env`
+
+## 🔌 NSQ Integration
+
+### Writer (Publicação)
+
+O `NsqService` usa o Writer nativo do `nsqjs` para publicar mensagens:
+
+```typescript
+import { NsqService } from './nsq/nsq.service';
+
+// Publicar mensagem única
+await nsqService.publish('events', { data: 'exemplo' });
+
+// Publicar em lote
+await nsqService.publishBatch('events', [
+  { data: 'evento1' },
+  { data: 'evento2' },
+]);
+```
+
+### Consumer (Consumo)
+
+O `NsqConsumer` usa o Reader nativo do `nsqjs` para consumir mensagens:
+
+- Conecta automaticamente ao nsqlookupd
+- Processa mensagens do tópico configurado
+- Confirma (finish) ou reenfileira (requeue) mensagens
 
 ## 📄 Licença
 

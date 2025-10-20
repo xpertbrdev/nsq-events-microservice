@@ -1,6 +1,6 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { NsqService } from '../../nsq/nsq.service';
 import { ContingencyService } from './contingency.service';
 import { IEvent } from '../interfaces/event.interface';
 
@@ -10,7 +10,7 @@ export class NsqPublisherService {
   private readonly topic: string;
 
   constructor(
-    @Inject('NSQ_CLIENT') private readonly client: ClientProxy,
+    private readonly nsqService: NsqService,
     private readonly configService: ConfigService,
     private readonly contingencyService: ContingencyService,
   ) {
@@ -19,10 +19,7 @@ export class NsqPublisherService {
 
   async publishBatch(events: IEvent[]): Promise<void> {
     try {
-      // NSQ não suporta batch nativo via emit, então publicamos individualmente
-      for (const event of events) {
-        this.client.emit(this.topic, event);
-      }
+      await this.nsqService.publishBatch(this.topic, events);
 
       this.logger.log(
         `Successfully published ${events.length} messages to NSQ topic ${this.topic}`,
@@ -38,10 +35,8 @@ export class NsqPublisherService {
 
   async publish(event: IEvent): Promise<void> {
     try {
-      this.client.emit(this.topic, event);
-      this.logger.debug(
-        `Published event to NSQ topic ${this.topic}`,
-      );
+      await this.nsqService.publish(this.topic, event);
+      this.logger.debug(`Published event to NSQ topic ${this.topic}`);
     } catch (error) {
       this.logger.error(`Failed to publish event to NSQ`, error);
       await this.contingencyService.saveToFile([
