@@ -1,25 +1,25 @@
 import {
-  Controller,
-  Post,
-  Get,
   Body,
-  Param,
+  Controller,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Post,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { StartSessionDto } from '../dto/start-session.dto';
-import { CreateEventDto } from '../dto/create-event.dto';
-import { SessionResponseDto } from '../dto/session-response.dto';
-import { SessionStatusDto } from '../dto/session-status.dto';
-import { StartSessionCommand } from '../commands/impl/start-session.command';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AddEventCommand } from '../commands/impl/add-event.command';
 import { CommitSessionCommand } from '../commands/impl/commit-session.command';
 import { RollbackSessionCommand } from '../commands/impl/rollback-session.command';
-import { GetSessionStatusQuery } from '../queries/impl/get-session-status.query';
-import { GetSessionEventsQuery } from '../queries/impl/get-session-events.query';
+import { StartSessionCommand } from '../commands/impl/start-session.command';
+import { CreateEventDto } from '../dto/create-event.dto';
+import { SessionResponseDto } from '../dto/session-response.dto';
+import { SessionStatusDto } from '../dto/session-status.dto';
+import { StartSessionDto } from '../dto/start-session.dto';
 import { Event } from '../entities/event.entity';
+import { GetSessionEventsQuery } from '../queries/impl/get-session-events.query';
+import { GetSessionStatusQuery } from '../queries/impl/get-session-status.query';
 
 @Controller('events')
 @ApiTags('Events')
@@ -27,7 +27,7 @@ export class EventsController {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
-  ) {}
+  ) { }
 
   @Post('sessions/start')
   @ApiOperation({ summary: 'Iniciar nova sessão de eventos' })
@@ -41,7 +41,6 @@ export class EventsController {
   ): Promise<SessionResponseDto> {
     return this.commandBus.execute(
       new StartSessionCommand(
-        dto.userId,
         dto.filialId,
         dto.filialCNPJ,
         dto.ambiente,

@@ -1,29 +1,27 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Logger } from '@nestjs/common';
-import { StartSessionCommand } from '../impl/start-session.command';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { SessionResponseDto } from '../../dto/session-response.dto';
 import { EventSessionRepository } from '../../repositories/event-session.repository';
 import { EventSessionService } from '../../services/event-session.service';
 import { MetricsService } from '../../services/metrics.service';
-import { SessionResponseDto } from '../../dto/session-response.dto';
+import { StartSessionCommand } from '../impl/start-session.command';
 
 @CommandHandler(StartSessionCommand)
 export class StartSessionHandler
-  implements ICommandHandler<StartSessionCommand, SessionResponseDto>
-{
+  implements ICommandHandler<StartSessionCommand, SessionResponseDto> {
   private readonly logger = new Logger(StartSessionHandler.name);
 
   constructor(
     private readonly sessionRepository: EventSessionRepository,
     private readonly sessionService: EventSessionService,
     private readonly metricsService: MetricsService,
-  ) {}
+  ) { }
 
   async execute(command: StartSessionCommand): Promise<SessionResponseDto> {
-    const { userId, filialId, filialCNPJ, ambiente, sender } = command;
+    const { filialId, filialCNPJ, ambiente, sender } = command;
 
     // Criar sessão com informações do tópico
     const session = this.sessionService.createSession(
-      userId,
       filialId,
       filialCNPJ,
       ambiente,
@@ -37,7 +35,7 @@ export class StartSessionHandler
     await this.metricsService.incrementActiveSessions();
 
     this.logger.log(
-      `Session ${session.id} started for user ${userId} with topic ${session.topic}`,
+      `Session ${session.id} started with topic ${session.topic}`,
     );
 
     return {

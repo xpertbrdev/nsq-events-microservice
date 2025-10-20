@@ -1,31 +1,29 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { v4 as uuidv4 } from 'uuid';
-import { ISession } from '../interfaces/session.interface';
-import { IEvent } from '../interfaces/event.interface';
 import { SessionStatus } from '../enums/session-status.enum';
+import { IEvent } from '../interfaces/event.interface';
+import { ISession } from '../interfaces/session.interface';
 
 @Injectable()
 export class EventSessionService {
   private readonly logger = new Logger(EventSessionService.name);
 
-  constructor(private readonly eventEmitter: EventEmitter2) {}
+  constructor(private readonly eventEmitter: EventEmitter2) { }
 
   createSession(
-    userId: string,
     filialId: string,
     filialCNPJ: string,
     ambiente: string,
     sender: string,
   ): ISession {
     const sessionId = uuidv4();
-    
+
     // Criar tópico no formato: ambiente-matrizId-matrizCNPJ-sender
     const topic = `${ambiente}-${filialId}-${filialCNPJ}-${sender}`;
-    
+
     const session: ISession = {
       id: sessionId,
-      userId,
       status: SessionStatus.ACTIVE,
       createdAt: new Date(),
       eventCount: 0,
@@ -37,12 +35,11 @@ export class EventSessionService {
     };
 
     this.logger.log(
-      `Session created: ${sessionId} for user ${userId} with topic ${topic}`,
+      `Session created: ${sessionId} with topic ${topic}`,
     );
 
     this.eventEmitter.emit('session.started', {
       sessionId,
-      userId,
       topic,
       timestamp: new Date(),
     });

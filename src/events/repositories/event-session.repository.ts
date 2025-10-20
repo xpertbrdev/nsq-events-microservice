@@ -16,7 +16,7 @@ export class EventSessionRepository {
   constructor(
     @InjectRedis() private readonly redis: Redis,
     private readonly contingencyService: ContingencyService,
-  ) {}
+  ) { }
 
   async save(session: EventSession): Promise<void> {
     try {
@@ -24,7 +24,6 @@ export class EventSessionRepository {
 
       await this.redis.hset(key, {
         id: session.id,
-        userId: session.userId,
         status: session.status,
         createdAt: session.createdAt.toISOString(),
         eventCount: session.eventCount.toString(),
@@ -58,7 +57,6 @@ export class EventSessionRepository {
 
       return {
         id: data.id,
-        userId: data.userId,
         status: data.status as SessionStatus,
         createdAt: new Date(data.createdAt),
         eventCount: parseInt(data.eventCount, 10),
