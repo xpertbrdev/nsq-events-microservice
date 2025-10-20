@@ -82,7 +82,7 @@ export class NsqService implements OnModuleDestroy {
   }
 
   isWriterConnected(): boolean {
-    return this.writer && this.writer.ready;
+    return this.writer && this.ready;
   }
 
   onModuleDestroy() {
