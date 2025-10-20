@@ -1,0 +1,432 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Events Module API",
+    "description": "API para gerenciamento de eventos com sessões transacionais",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "Events",
+      "description": "Endpoints para gerenciamento de sessões e eventos"
+    },
+    {
+      "name": "Metrics",
+      "description": "Endpoints para métricas do sistema"
+    }
+  ],
+  "servers": [
+    {
+      "url": "http://localhost:3000"
+    }
+  ],
+  "paths": {
+    "/events/sessions/start": {
+      "post": {
+        "operationId": "startSession",
+        "summary": "Iniciar nova sessão de eventos",
+        "tags": ["Events"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartSessionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Sessão criada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/sessions/{sessionId}/events": {
+      "post": {
+        "operationId": "addEvent",
+        "summary": "Adicionar evento à sessão",
+        "tags": ["Events"],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEventDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Evento adicionado com sucesso"
+          },
+          "400": {
+            "description": "Sessão não está ativa"
+          },
+          "404": {
+            "description": "Sessão não encontrada"
+          }
+        }
+      }
+    },
+    "/events/sessions/{sessionId}/commit": {
+      "post": {
+        "operationId": "commitSession",
+        "summary": "Finalizar e processar sessão",
+        "tags": ["Events"],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Sessão processada com sucesso"
+          },
+          "400": {
+            "description": "Sessão não está ativa"
+          },
+          "404": {
+            "description": "Sessão não encontrada"
+          }
+        }
+      }
+    },
+    "/events/sessions/{sessionId}/rollback": {
+      "post": {
+        "operationId": "rollbackSession",
+        "summary": "Cancelar sessão",
+        "tags": ["Events"],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Sessão cancelada com sucesso"
+          },
+          "404": {
+            "description": "Sessão não encontrada"
+          }
+        }
+      }
+    },
+    "/events/sessions/{sessionId}/status": {
+      "get": {
+        "operationId": "getSessionStatus",
+        "summary": "Obter status da sessão",
+        "tags": ["Events"],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status da sessão",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionStatusDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Sessão não encontrada"
+          }
+        }
+      }
+    },
+    "/events/sessions/{sessionId}/events": {
+      "get": {
+        "operationId": "getSessionEvents",
+        "summary": "Listar eventos da sessão",
+        "tags": ["Events"],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de eventos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Event"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Sessão não encontrada"
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "operationId": "getMetrics",
+        "summary": "Obter métricas do sistema",
+        "tags": ["Metrics"],
+        "responses": {
+          "200": {
+            "description": "Métricas do sistema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "StartSessionDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "ID do usuário"
+          }
+        },
+        "required": ["userId"]
+      },
+      "SessionResponseDto": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "description": "ID da sessão"
+          },
+          "message": {
+            "type": "string",
+            "description": "Mensagem de status"
+          }
+        },
+        "required": ["sessionId"]
+      },
+      "CreateEventDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Dados do evento"
+          },
+          "eventType": {
+            "type": "string",
+            "description": "Tipo do evento",
+            "enum": ["updated", "inserted", "deleted", "others"]
+          },
+          "userId": {
+            "type": "string",
+            "description": "ID do usuário"
+          },
+          "FilialIDDestino": {
+            "type": "string",
+            "description": "ID da filial de destino"
+          },
+          "CNPJDestino": {
+            "type": "string",
+            "description": "CNPJ da filial de destino"
+          },
+          "FilialOrigem": {
+            "type": "string",
+            "description": "ID da filial de origem"
+          },
+          "CNPJOrigem": {
+            "type": "string",
+            "description": "CNPJ da filial de origem"
+          }
+        },
+        "required": [
+          "data",
+          "eventType",
+          "userId",
+          "FilialIDDestino",
+          "CNPJDestino",
+          "FilialOrigem",
+          "CNPJOrigem"
+        ]
+      },
+      "SessionStatusDto": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "description": "ID da sessão"
+          },
+          "status": {
+            "type": "string",
+            "description": "Status da sessão",
+            "enum": ["ACTIVE", "PROCESSING", "COMMITTED", "FAILED", "ROLLED_BACK"]
+          },
+          "eventCount": {
+            "type": "number",
+            "description": "Quantidade de eventos"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data de criação"
+          }
+        },
+        "required": ["sessionId", "status", "eventCount", "createdAt"]
+      },
+      "Event": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Dados do evento"
+          },
+          "eventType": {
+            "type": "string",
+            "description": "Tipo do evento",
+            "enum": ["updated", "inserted", "deleted", "others"]
+          },
+          "userId": {
+            "type": "string",
+            "description": "ID do usuário"
+          },
+          "FilialIDDestino": {
+            "type": "string",
+            "description": "ID da filial de destino"
+          },
+          "CNPJDestino": {
+            "type": "string",
+            "description": "CNPJ da filial de destino"
+          },
+          "FilialOrigem": {
+            "type": "string",
+            "description": "ID da filial de origem"
+          },
+          "CNPJOrigem": {
+            "type": "string",
+            "description": "CNPJ da filial de origem"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora do evento"
+          }
+        },
+        "required": [
+          "data",
+          "eventType",
+          "userId",
+          "FilialIDDestino",
+          "CNPJDestino",
+          "FilialOrigem",
+          "CNPJOrigem",
+          "timestamp"
+        ]
+      },
+      "MetricsResponseDto": {
+        "type": "object",
+        "properties": {
+          "totalEvents": {
+            "type": "number",
+            "description": "Total de eventos processados"
+          },
+          "successRate": {
+            "type": "number",
+            "description": "Taxa de sucesso (%)"
+          },
+          "averageDuration": {
+            "type": "number",
+            "description": "Duração média de processamento (ms)"
+          },
+          "eventsPerMinute": {
+            "type": "number",
+            "description": "Eventos por minuto"
+          },
+          "deadLetterCount": {
+            "type": "number",
+            "description": "Quantidade de mensagens na DLQ"
+          },
+          "recentFailures": {
+            "type": "array",
+            "description": "Falhas recentes",
+            "items": {
+              "type": "object",
+              "properties": {
+                "timestamp": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "sessionId": {
+                  "type": "string"
+                },
+                "error": {
+                  "type": "string"
+                },
+                "eventCount": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "totalEvents",
+          "successRate",
+          "averageDuration",
+          "eventsPerMinute",
+          "deadLetterCount",
+          "recentFailures"
+        ]
+      }
+    }
+  }
+}
+

@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: events-redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+
+  nsqlookupd:
+    image: nsqio/nsq
+    container_name: events-nsqlookupd
+    command: /nsqlookupd
+    ports:
+      - '4160:4160'
+      - '4161:4161'
+
+  nsqd:
+    image: nsqio/nsq
+    container_name: events-nsqd
+    command: /nsqd --lookupd-tcp-address=nsqlookupd:4160 --broadcast-address=nsqd
+    depends_on:
+      - nsqlookupd
+    ports:
+      - '4150:4150'
+      - '4151:4151'
+
+  nsqadmin:
+    image: nsqio/nsq
+    container_name: events-nsqadmin
+    command: /nsqadmin --lookupd-http-address=nsqlookupd:4161
+    depends_on:
+      - nsqlookupd
+    ports:
+      - '4171:4171'
+
+volumes:
+  redis-data:
+

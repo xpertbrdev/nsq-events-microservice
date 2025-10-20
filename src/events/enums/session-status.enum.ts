@@ -1,0 +1,8 @@
+export enum SessionStatus {
+  ACTIVE = 'ACTIVE',
+  PROCESSING = 'PROCESSING',
+  COMMITTED = 'COMMITTED',
+  FAILED = 'FAILED',
+  ROLLED_BACK = 'ROLLED_BACK',
+}
+
