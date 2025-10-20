@@ -27,11 +27,17 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
+  // Endpoint para obter o OpenAPI JSON
+  app.use('/api-json', (req, res) => {
+    res.json(document);
+  });
+
   const port = process.env.PORT || 3000;
   await app.listen(port);
 
   console.log(`Application is running on: http://localhost:${port}`);
   console.log(`Swagger documentation: http://localhost:${port}/api`);
+  console.log(`OpenAPI JSON: http://localhost:${port}/api-json`);
 }
 
 bootstrap();

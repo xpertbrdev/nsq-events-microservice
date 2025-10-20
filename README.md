@@ -1,15 +1,17 @@
-# Events Module - NestJS
+# Events Module - NestJS v2.0
 
-Módulo de gerenciamento de eventos com sessões transacionais, integração com NSQ e sistema de contingência para Redis.
+Módulo de gerenciamento de eventos com sessões transacionais, integração com NSQ e tópicos dinâmicos.
 
 ## 📋 Características
 
 - **Sessões Transacionais**: Controle explícito de início, commit e rollback
+- **Tópicos NSQ Dinâmicos**: Gerados automaticamente no formato `ambiente-matrizId-matrizCNPJ-sender`
 - **Integração NSQ**: Publicação de eventos via NSQ com Writer/Reader nativo
 - **Sistema de Contingência**: Fallback para arquivo local em caso de falha do Redis
 - **Métricas**: Monitoramento completo com Prometheus
 - **CQRS**: Arquitetura baseada em comandos e queries
 - **Swagger**: Documentação automática da API
+- **Health Checks**: Endpoints para verificar saúde da API, Redis e NSQ
 
 ## 🚀 Tecnologias
 
@@ -19,6 +21,7 @@ Módulo de gerenciamento de eventos com sessões transacionais, integração com
 - TypeScript
 - CQRS
 - Swagger/OpenAPI
+- Terminus (Health Checks)
 
 ## 📦 Instalação
 
@@ -83,6 +86,8 @@ npm run start:prod
 A aplicação estará disponível em:
 - API: `http://localhost:3000`
 - Swagger: `http://localhost:3000/api`
+- OpenAPI JSON: `http://localhost:3000/api-json`
+- Health Check: `http://localhost:3000/health`
 
 ## 📚 API Endpoints
 
@@ -94,7 +99,18 @@ POST /events/sessions/start
 Content-Type: application/json
 
 {
-  "userId": "user123"
+  "filialId": "001",
+  "filialCNPJ": "12345678000190",
+  "ambiente": "production",
+  "sender": "erp"
+}
+```
+
+**Response:**
+```json
+{
+  "sessionId": "uuid-da-sessao",
+  "message": "Session started successfully with topic: production-001-12345678000190-erp"
 }
 ```
 
@@ -104,13 +120,16 @@ POST /events/sessions/{sessionId}/events
 Content-Type: application/json
 
 {
-  "data": { "any": "data" },
-  "eventType": "inserted",
-  "userId": "user123",
-  "FilialIDDestino": "001",
-  "CNPJDestino": "12345678000190",
-  "FilialOrigem": "002",
-  "CNPJOrigem": "98765432000100"
+  "data": {
+    "produto": "Notebook",
+    "quantidade": 5,
+    "preco": 3500.00
+  },
+  "method": "create",
+  "className": "Produto",
+  "unico": "PROD-12345",
+  "filialId": 1,
+  "filialCnpj": "12345678000190"
 }
 ```
 
@@ -118,6 +137,8 @@ Content-Type: application/json
 ```http
 POST /events/sessions/{sessionId}/commit
 ```
+
+Publica todos os eventos no tópico NSQ definido na sessão.
 
 #### Rollback (Cancelar Sessão)
 ```http
@@ -140,35 +161,70 @@ GET /events/sessions/{sessionId}/events
 GET /metrics
 ```
 
-## 🏗️ Arquitetura
+### Health Checks
 
+#### Health Check Geral
+```http
+GET /health
 ```
-events-module/
-├── src/
-│   ├── nsq/                   # Módulo NSQ
-│   │   ├── nsq.service.ts     # Writer NSQ
-│   │   ├── nsq.consumer.ts    # Reader NSQ
-│   │   └── nsq.module.ts
-│   ├── events/
-│   │   ├── commands/          # Comandos CQRS
-│   │   ├── queries/           # Queries CQRS
-│   │   ├── services/          # Lógica de negócio
-│   │   ├── repositories/      # Acesso a dados
-│   │   ├── controllers/       # Endpoints HTTP
-│   │   ├── dto/               # Data Transfer Objects
-│   │   ├── entities/          # Entidades
-│   │   ├── enums/             # Enumerações
-│   │   └── interfaces/        # Interfaces TypeScript
-│   └── main.ts
-└── docker/
-    └── docker-compose.yml
+
+Verifica Redis e NSQ.
+
+#### Health Check NSQ
+```http
+GET /health/nsq
 ```
+
+Verifica conexão do Writer e Reader NSQ.
+
+#### Health Check Redis
+```http
+GET /health/redis
+```
+
+Verifica conexão com Redis.
+
+### OpenAPI
+
+#### Obter OpenAPI JSON
+```http
+GET /api-json
+```
+
+Retorna a especificação OpenAPI 3.0 em formato JSON.
+
+## 🏗️ Estrutura de Dados
+
+### IEvent
+
+```typescript
+interface IEvent {
+  timestamp: Date;
+  messageId: string;  // UUID gerado automaticamente
+  data: IEventData;
+}
+
+interface IEventData {
+  data: any;          // Dados do evento
+  method: string;     // Método/ação (ex: 'create', 'update', 'delete')
+  className: string;  // Nome da classe/entidade
+  unico: string;      // Identificador único do registro
+  filialId: number;   // ID da filial
+  filialCnpj: string; // CNPJ da filial
+}
+```
+
+### Tópico NSQ
+
+Formato: `ambiente-matrizId-matrizCNPJ-sender`
+
+Exemplo: `production-001-12345678000190-erp`
 
 ## 🔄 Fluxo de Trabalho
 
-1. **Iniciar Sessão**: Cliente inicia uma sessão transacional
+1. **Iniciar Sessão**: Cliente inicia uma sessão transacional (define o tópico NSQ)
 2. **Adicionar Eventos**: Eventos são adicionados à sessão (armazenados no Redis)
-3. **Commit**: Todos os eventos são publicados no NSQ via Writer
+3. **Commit**: Todos os eventos são publicados no NSQ no tópico da sessão
 4. **Rollback** (opcional): Cancela a sessão e descarta eventos
 
 ## 🛡️ Sistema de Contingência
@@ -204,18 +260,18 @@ npm run test:cov
 
 Para integrar este módulo em um projeto NestJS existente:
 
-1. Copie as pastas `src/nsq` e `src/events` para seu projeto
+1. Copie as pastas `src/nsq`, `src/events` e `src/health` para seu projeto
 2. Importe os módulos no seu `AppModule`:
 
 ```typescript
-import { NsqModule } from './nsq/nsq.module';
 import { EventsModule } from './events/events.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
     // ... outros módulos
-    NsqModule,
     EventsModule,
+    HealthModule,
   ],
 })
 export class AppModule {}
@@ -249,6 +305,54 @@ O `NsqConsumer` usa o Reader nativo do `nsqjs` para consumir mensagens:
 - Conecta automaticamente ao nsqlookupd
 - Processa mensagens do tópico configurado
 - Confirma (finish) ou reenfileira (requeue) mensagens
+
+## 📄 Exemplo Completo
+
+```typescript
+import axios from 'axios';
+
+const API_URL = 'http://localhost:3000';
+
+async function processarPedido() {
+  // 1. Iniciar sessão
+  const { data: session } = await axios.post(`${API_URL}/events/sessions/start`, {
+    filialId: '001',
+    filialCNPJ: '12345678000190',
+    ambiente: 'production',
+    sender: 'pdv'
+  });
+
+  console.log('Sessão criada:', session.sessionId);
+  console.log('Tópico NSQ:', 'production-001-12345678000190-pdv');
+
+  try {
+    // 2. Adicionar evento de criação de pedido
+    await axios.post(`${API_URL}/events/sessions/${session.sessionId}/events`, {
+      data: {
+        numeroPedido: 'PED-001',
+        cliente: 'João Silva',
+        total: 150.00
+      },
+      method: 'create',
+      className: 'Pedido',
+      unico: 'PED-001',
+      filialId: 1,
+      filialCnpj: '12345678000190'
+    });
+
+    // 3. Commit - publica todos os eventos
+    await axios.post(`${API_URL}/events/sessions/${session.sessionId}/commit`);
+    
+    console.log('Pedido processado com sucesso!');
+  } catch (error) {
+    // 4. Em caso de erro, fazer rollback
+    await axios.post(`${API_URL}/events/sessions/${session.sessionId}/rollback`);
+    console.error('Erro ao processar pedido:', error);
+  }
+}
+
+processarPedido();
+```
 
 ## 📄 Licença
 
