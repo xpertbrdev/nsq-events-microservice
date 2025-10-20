@@ -63,6 +63,9 @@ export class CommitSessionHandler
         SessionStatus.COMMITTED,
       );
 
+      // Mover sessão para COMMITTED
+      await this.sessionRepository.moveToCommitted(sessionId);
+
       // Emitir evento
       this.sessionService.emitSessionCommitted(sessionId, events.length);
 

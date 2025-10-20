@@ -34,8 +34,11 @@ export class RollbackSessionHandler
       SessionStatus.ROLLED_BACK,
     );
 
-    // Deletar eventos da sessão
-    await this.sessionRepository.deleteSession(sessionId);
+    // Mover sessão para COMMITTED (histórico)
+    await this.sessionRepository.moveToCommitted(sessionId);
+
+    // Deletar apenas os eventos (mantém sessão no COMMITTED para histórico)
+    await this.sessionRepository.deleteEvents(sessionId);
 
     // Emitir evento
     this.sessionService.emitSessionRolledBack(sessionId);
