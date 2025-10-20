@@ -1,16 +1,15 @@
+import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Logger, NotFoundException, BadRequestException } from '@nestjs/common';
-import { CommitSessionCommand } from '../impl/commit-session.command';
-import { EventSessionRepository } from '../../repositories/event-session.repository';
-import { EventSessionService } from '../../services/event-session.service';
-import { EventProcessorService } from '../../services/event-processor.service';
-import { MetricsService } from '../../services/metrics.service';
 import { SessionStatus } from '../../enums/session-status.enum';
+import { EventSessionRepository } from '../../repositories/event-session.repository';
+import { EventProcessorService } from '../../services/event-processor.service';
+import { EventSessionService } from '../../services/event-session.service';
+import { MetricsService } from '../../services/metrics.service';
+import { CommitSessionCommand } from '../impl/commit-session.command';
 
 @CommandHandler(CommitSessionCommand)
 export class CommitSessionHandler
-  implements ICommandHandler<CommitSessionCommand, void>
-{
+  implements ICommandHandler<CommitSessionCommand, void> {
   private readonly logger = new Logger(CommitSessionHandler.name);
 
   constructor(
@@ -18,7 +17,7 @@ export class CommitSessionHandler
     private readonly sessionService: EventSessionService,
     private readonly eventProcessor: EventProcessorService,
     private readonly metricsService: MetricsService,
-  ) {}
+  ) { }
 
   async execute(command: CommitSessionCommand): Promise<void> {
     const { sessionId } = command;
@@ -30,7 +29,7 @@ export class CommitSessionHandler
       throw new NotFoundException(`Session ${sessionId} not found`);
     }
 
-    if (session.status !== SessionStatus.ACTIVE) {
+    if (![SessionStatus.ACTIVE, SessionStatus.FAILED].includes(session.status)) {
       throw new BadRequestException(
         `Session ${sessionId} is not active (status: ${session.status})`,
       );

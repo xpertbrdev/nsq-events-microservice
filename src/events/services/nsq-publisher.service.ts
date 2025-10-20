@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NsqService } from '../../nsq/nsq.service';
-import { ContingencyService } from './contingency.service';
 import { IEvent } from '../interfaces/event.interface';
+import { ContingencyService } from './contingency.service';
 
 @Injectable()
 export class NsqPublisherService {
