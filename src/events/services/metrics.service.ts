@@ -30,10 +30,10 @@ export class MetricsService {
     return parseInt(count || '0', 10);
   }
 
-  async recordSuccess(eventCount: number, duration: number): Promise<void> {
+  async recordSuccess(eventCount: number, duration: number, sessionId: string): Promise<void> {
     const record: IProcessingRecord = {
       timestamp: new Date(),
-      sessionId: '', // será preenchido pelo caller
+      sessionId,
       eventCount,
       duration,
       success: true,

@@ -28,7 +28,7 @@ export class EventProcessorService {
       }
 
       const duration = Date.now() - startTime;
-      await this.metricsService.recordSuccess(events.length, duration);
+      await this.metricsService.recordSuccess(events.length, duration, sessionId);
 
       this.logger.log(
         `Session ${sessionId} processed successfully: ${events.length} events in ${duration}ms to topic ${topic || 'default'}`,
