@@ -19,7 +19,6 @@ export class CreateEventDto {
 
   @ApiProperty({ description: 'Identificador único do registro' })
   @IsString()
-  @IsNotEmpty()
   unico: string;
 
   @ApiProperty({ description: 'ID da filial' })

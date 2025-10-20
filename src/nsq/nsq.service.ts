@@ -81,7 +81,8 @@ export class NsqService implements OnModuleDestroy {
     await Promise.all(promises);
   }
 
-  isWriterConnected(): boolean {
+  async isWriterConnected() {
+    await this.init()
     return this.writer && this.ready;
   }
 
