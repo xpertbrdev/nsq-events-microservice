@@ -54,8 +54,8 @@ export class CommitSessionHandler
         SessionStatus.PROCESSING,
       );
 
-      // Processar eventos
-      await this.eventProcessor.processSession(sessionId, events);
+      // Processar eventos com o tópico da sessão
+      await this.eventProcessor.processSession(sessionId, events, session.topic);
 
       // Atualizar status para COMMITTED
       await this.sessionRepository.updateStatus(

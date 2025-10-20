@@ -39,7 +39,15 @@ export class EventsController {
   async startSession(
     @Body() dto: StartSessionDto,
   ): Promise<SessionResponseDto> {
-    return this.commandBus.execute(new StartSessionCommand(dto.userId));
+    return this.commandBus.execute(
+      new StartSessionCommand(
+        dto.userId,
+        dto.filialId,
+        dto.filialCNPJ,
+        dto.ambiente,
+        dto.sender,
+      ),
+    );
   }
 
   @Post('sessions/:sessionId/events')

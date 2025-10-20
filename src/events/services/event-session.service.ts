@@ -11,34 +11,39 @@ export class EventSessionService {
 
   constructor(private readonly eventEmitter: EventEmitter2) {}
 
-  createSessionId(userId: string): string {
+  createSession(
+    userId: string,
+    filialId: string,
+    filialCNPJ: string,
+    ambiente: string,
+    sender: string,
+  ): ISession {
     const sessionId = uuidv4();
-    this.logger.log(`Session created: ${sessionId} for user ${userId}`);
     
-    this.eventEmitter.emit('session.started', {
-      sessionId,
-      userId,
-      timestamp: new Date(),
-    });
-
-    return sessionId;
-  }
-
-  createSession(userId: string): ISession {
-    const sessionId = uuidv4();
+    // Criar tópico no formato: ambiente-matrizId-matrizCNPJ-sender
+    const topic = `${ambiente}-${filialId}-${filialCNPJ}-${sender}`;
+    
     const session: ISession = {
       id: sessionId,
       userId,
       status: SessionStatus.ACTIVE,
       createdAt: new Date(),
       eventCount: 0,
+      ambiente,
+      matrizId: filialId,
+      matrizCNPJ: filialCNPJ,
+      sender,
+      topic,
     };
 
-    this.logger.log(`Session created: ${sessionId} for user ${userId}`);
-    
+    this.logger.log(
+      `Session created: ${sessionId} for user ${userId} with topic ${topic}`,
+    );
+
     this.eventEmitter.emit('session.started', {
       sessionId,
       userId,
+      topic,
       timestamp: new Date(),
     });
 

@@ -1,13 +1,15 @@
-import { EventType } from '../enums/event-type.enum';
-
 export interface IEvent {
+  timestamp: Date;
+  messageId: string;
+  data: IEventData;
+}
+
+export interface IEventData {
   data: any;
-  eventType: EventType;
-  userId: string;
-  FilialIDDestino: string;
-  CNPJDestino: string;
-  FilialOrigem: string;
-  CNPJOrigem: string;
-  timestamp?: Date;
+  method: string;
+  className: string;
+  unico: string;
+  filialId: number;
+  filialCnpj: string;
 }
 

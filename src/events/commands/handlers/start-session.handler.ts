@@ -19,10 +19,16 @@ export class StartSessionHandler
   ) {}
 
   async execute(command: StartSessionCommand): Promise<SessionResponseDto> {
-    const { userId } = command;
+    const { userId, filialId, filialCNPJ, ambiente, sender } = command;
 
-    // Criar sessão
-    const session = this.sessionService.createSession(userId);
+    // Criar sessão com informações do tópico
+    const session = this.sessionService.createSession(
+      userId,
+      filialId,
+      filialCNPJ,
+      ambiente,
+      sender,
+    );
 
     // Salvar no Redis
     await this.sessionRepository.save(session);
@@ -30,11 +36,13 @@ export class StartSessionHandler
     // Atualizar métricas
     await this.metricsService.incrementActiveSessions();
 
-    this.logger.log(`Session ${session.id} started for user ${userId}`);
+    this.logger.log(
+      `Session ${session.id} started for user ${userId} with topic ${session.topic}`,
+    );
 
     return {
       sessionId: session.id,
-      message: 'Session started successfully',
+      message: `Session started successfully with topic: ${session.topic}`,
     };
   }
 }

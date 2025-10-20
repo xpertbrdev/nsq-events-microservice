@@ -7,5 +7,11 @@ export class EventSession {
   createdAt: Date;
   eventCount: number;
   updatedAt?: Date;
+  // Informações do tópico NSQ
+  ambiente: string;
+  matrizId: string;
+  matrizCNPJ: string;
+  sender: string;
+  topic?: string;
 }
 

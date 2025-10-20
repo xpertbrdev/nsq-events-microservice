@@ -28,6 +28,11 @@ export class EventSessionRepository {
         status: session.status,
         createdAt: session.createdAt.toISOString(),
         eventCount: session.eventCount.toString(),
+        ambiente: session.ambiente,
+        matrizId: session.matrizId,
+        matrizCNPJ: session.matrizCNPJ,
+        sender: session.sender,
+        topic: session.topic || '',
       });
 
       await this.redis.expire(key, this.SESSION_TTL);
@@ -57,6 +62,11 @@ export class EventSessionRepository {
         status: data.status as SessionStatus,
         createdAt: new Date(data.createdAt),
         eventCount: parseInt(data.eventCount, 10),
+        ambiente: data.ambiente,
+        matrizId: data.matrizId,
+        matrizCNPJ: data.matrizCNPJ,
+        sender: data.sender,
+        topic: data.topic,
       };
     } catch (error) {
       this.logger.error(`Failed to find session ${sessionId}`, error);

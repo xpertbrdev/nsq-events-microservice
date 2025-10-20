@@ -12,7 +12,11 @@ export class EventProcessorService {
     private readonly metricsService: MetricsService,
   ) {}
 
-  async processSession(sessionId: string, events: IEvent[]): Promise<void> {
+  async processSession(
+    sessionId: string,
+    events: IEvent[],
+    topic?: string,
+  ): Promise<void> {
     const startTime = Date.now();
 
     try {
@@ -20,14 +24,14 @@ export class EventProcessorService {
       const batches = this.createBatches(events, 10);
 
       for (const batch of batches) {
-        await this.nsqPublisher.publishBatch(batch);
+        await this.nsqPublisher.publishBatch(batch, topic);
       }
 
       const duration = Date.now() - startTime;
       await this.metricsService.recordSuccess(events.length, duration);
 
       this.logger.log(
-        `Session ${sessionId} processed successfully: ${events.length} events in ${duration}ms`,
+        `Session ${sessionId} processed successfully: ${events.length} events in ${duration}ms to topic ${topic || 'default'}`,
       );
     } catch (error) {
       await this.metricsService.recordFailure(error, sessionId);

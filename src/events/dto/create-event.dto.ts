@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsObject, IsString } from 'class-validator';
-import { EventType } from '../enums/event-type.enum';
+import { IsNotEmpty, IsNumber, IsObject, IsString } from 'class-validator';
 
 export class CreateEventDto {
   @ApiProperty({ description: 'Dados do evento' })
@@ -8,36 +7,29 @@ export class CreateEventDto {
   @IsObject()
   data: any;
 
-  @ApiProperty({
-    description: 'Tipo do evento',
-    enum: EventType,
-  })
-  @IsEnum(EventType)
-  eventType: EventType;
-
-  @ApiProperty({ description: 'ID do usuário' })
+  @ApiProperty({ description: 'Método/ação executada' })
   @IsString()
   @IsNotEmpty()
-  userId: string;
+  method: string;
 
-  @ApiProperty({ description: 'ID da filial de destino' })
+  @ApiProperty({ description: 'Nome da classe/entidade' })
   @IsString()
   @IsNotEmpty()
-  FilialIDDestino: string;
+  className: string;
 
-  @ApiProperty({ description: 'CNPJ da filial de destino' })
+  @ApiProperty({ description: 'Identificador único do registro' })
   @IsString()
   @IsNotEmpty()
-  CNPJDestino: string;
+  unico: string;
 
-  @ApiProperty({ description: 'ID da filial de origem' })
+  @ApiProperty({ description: 'ID da filial' })
+  @IsNumber()
+  @IsNotEmpty()
+  filialId: number;
+
+  @ApiProperty({ description: 'CNPJ da filial' })
   @IsString()
   @IsNotEmpty()
-  FilialOrigem: string;
-
-  @ApiProperty({ description: 'CNPJ da filial de origem' })
-  @IsString()
-  @IsNotEmpty()
-  CNPJOrigem: string;
+  filialCnpj: string;
 }
 
