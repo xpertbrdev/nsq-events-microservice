@@ -1,0 +1,439 @@
+{
+  "info": {
+    "name": "Events Module API",
+    "description": "API para gerenciamento de eventos com sessões transacionais e NSQ",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "1"
+  },
+  "item": [
+    {
+      "name": "Sessions",
+      "item": [
+        {
+          "name": "Start Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Salvar sessionId no environment",
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('sessionId', response.sessionId);",
+                  "    console.log('Session ID saved:', response.sessionId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filialId\": \"001\",\n  \"filialCNPJ\": \"12345678000190\",\n  \"ambiente\": \"production\",\n  \"sender\": \"erp\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/sessions/start",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "sessions", "start"]
+            },
+            "description": "Inicia uma nova sessão de eventos. O sessionId retornado é automaticamente salvo no environment."
+          },
+          "response": []
+        },
+        {
+          "name": "Add Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"produto\": \"Notebook Dell\",\n    \"quantidade\": 5,\n    \"preco\": 3500.00,\n    \"categoria\": \"Informática\"\n  },\n  \"method\": \"create\",\n  \"className\": \"Produto\",\n  \"unico\": \"PROD-001\",\n  \"filialId\": 1,\n  \"filialCnpj\": \"12345678000190\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/sessions/{{sessionId}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "sessions", "{{sessionId}}", "events"]
+            },
+            "description": "Adiciona um evento à sessão ativa. Usa o sessionId do environment."
+          },
+          "response": []
+        },
+        {
+          "name": "Commit Session",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events/sessions/{{sessionId}}/commit",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "sessions", "{{sessionId}}", "commit"]
+            },
+            "description": "Finaliza a sessão e publica todos os eventos no NSQ. Usa o sessionId do environment."
+          },
+          "response": []
+        },
+        {
+          "name": "Rollback Session",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events/sessions/{{sessionId}}/rollback",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "sessions", "{{sessionId}}", "rollback"]
+            },
+            "description": "Cancela a sessão e descarta todos os eventos. Usa o sessionId do environment."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Session Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events/sessions/{{sessionId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "sessions", "{{sessionId}}", "status"]
+            },
+            "description": "Obtém o status da sessão. Usa o sessionId do environment."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Session Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events/sessions/{{sessionId}}/events",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "sessions", "{{sessionId}}", "events"]
+            },
+            "description": "Lista todos os eventos da sessão. Usa o sessionId do environment."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints para gerenciamento de sessões e eventos"
+    },
+    {
+      "name": "Metrics",
+      "item": [
+        {
+          "name": "Get Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["metrics"]
+            },
+            "description": "Obtém métricas do sistema (totalEvents, successRate, averageDuration, etc.)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints de métricas"
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Health check geral (Redis + NSQ)"
+          },
+          "response": []
+        },
+        {
+          "name": "Health Check NSQ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/nsq",
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "nsq"]
+            },
+            "description": "Health check específico do NSQ (Writer e Reader)"
+          },
+          "response": []
+        },
+        {
+          "name": "Health Check Redis",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/redis",
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "redis"]
+            },
+            "description": "Health check específico do Redis"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints de health check"
+    },
+    {
+      "name": "OpenAPI",
+      "item": [
+        {
+          "name": "Get OpenAPI JSON",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api-json",
+              "host": ["{{baseUrl}}"],
+              "path": ["api-json"]
+            },
+            "description": "Retorna a especificação OpenAPI 3.0 em formato JSON"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoint para obter especificação OpenAPI"
+    },
+    {
+      "name": "Examples",
+      "item": [
+        {
+          "name": "Complete Flow - Create Product",
+          "item": [
+            {
+              "name": "1. Start Session",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const response = pm.response.json();",
+                      "    pm.environment.set('sessionId', response.sessionId);",
+                      "    console.log('Session ID saved:', response.sessionId);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"filialId\": \"001\",\n  \"filialCNPJ\": \"12345678000190\",\n  \"ambiente\": \"production\",\n  \"sender\": \"pdv\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/events/sessions/start",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["events", "sessions", "start"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "2. Add Product Event",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"nome\": \"Notebook Dell Inspiron\",\n    \"preco\": 3500.00,\n    \"estoque\": 10,\n    \"categoria\": \"Informática\"\n  },\n  \"method\": \"create\",\n  \"className\": \"Produto\",\n  \"unico\": \"PROD-12345\",\n  \"filialId\": 1,\n  \"filialCnpj\": \"12345678000190\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/events/sessions/{{sessionId}}/events",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["events", "sessions", "{{sessionId}}", "events"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "3. Check Status",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/events/sessions/{{sessionId}}/status",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["events", "sessions", "{{sessionId}}", "status"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "4. Commit",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/events/sessions/{{sessionId}}/commit",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["events", "sessions", "{{sessionId}}", "commit"]
+                }
+              },
+              "response": []
+            }
+          ],
+          "description": "Exemplo completo de fluxo: criar produto"
+        },
+        {
+          "name": "Complete Flow - Create Order",
+          "item": [
+            {
+              "name": "1. Start Session",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const response = pm.response.json();",
+                      "    pm.environment.set('sessionId', response.sessionId);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"filialId\": \"002\",\n  \"filialCNPJ\": \"98765432000100\",\n  \"ambiente\": \"production\",\n  \"sender\": \"ecommerce\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/events/sessions/start",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["events", "sessions", "start"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "2. Add Order Event",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"numeroPedido\": \"PED-001\",\n    \"cliente\": \"João Silva\",\n    \"cpf\": \"12345678900\",\n    \"total\": 150.00,\n    \"status\": \"pendente\"\n  },\n  \"method\": \"create\",\n  \"className\": \"Pedido\",\n  \"unico\": \"PED-001\",\n  \"filialId\": 2,\n  \"filialCnpj\": \"98765432000100\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/events/sessions/{{sessionId}}/events",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["events", "sessions", "{{sessionId}}", "events"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "3. Add Order Item Event",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"pedidoId\": \"PED-001\",\n    \"produto\": \"Mouse Logitech\",\n    \"quantidade\": 2,\n    \"precoUnitario\": 75.00,\n    \"subtotal\": 150.00\n  },\n  \"method\": \"create\",\n  \"className\": \"ItemPedido\",\n  \"unico\": \"ITEM-001\",\n  \"filialId\": 2,\n  \"filialCnpj\": \"98765432000100\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/events/sessions/{{sessionId}}/events",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["events", "sessions", "{{sessionId}}", "events"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "4. List Events",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/events/sessions/{{sessionId}}/events",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["events", "sessions", "{{sessionId}}", "events"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "5. Commit",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/events/sessions/{{sessionId}}/commit",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["events", "sessions", "{{sessionId}}", "commit"]
+                }
+              },
+              "response": []
+            }
+          ],
+          "description": "Exemplo completo de fluxo: criar pedido com itens"
+        }
+      ],
+      "description": "Exemplos de fluxos completos"
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+}
+
