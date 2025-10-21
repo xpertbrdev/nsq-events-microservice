@@ -2,32 +2,46 @@
 import { Injectable, OnModuleDestroy, OnModuleInit, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Message, Reader } from 'nsqjs';
+import { NsqMessageStorageService } from './nsq-message-storage.service';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class NsqConsumer implements OnModuleInit, OnModuleDestroy {
   private reader: Reader;
   private readonly logger = new Logger(NsqConsumer.name);
+  private topic: string;
+  private channel: string;
 
-  constructor(private configService: ConfigService) {}
+  constructor(
+    private configService: ConfigService,
+    private messageStorage: NsqMessageStorageService,
+  ) {}
 
   onModuleInit() {
     const url: string = this.configService.get('NSQLOOKUPD_HTTP_ADDR') || '127.0.0.1:4161';
-    const topic: string = this.configService.get('NSQ_TOPIC') || 'events';
-    const channel: string = this.configService.get('NSQ_CHANNEL') || 'events_channel';
+    this.topic = this.configService.get('NSQ_TOPIC') || 'events';
+    this.channel = this.configService.get('NSQ_CHANNEL') || 'events_channel';
 
-    this.reader = new Reader(topic, channel, {
+    this.reader = new Reader(this.topic, this.channel, {
       lookupdHTTPAddresses: url,
     });
 
     this.reader.connect();
 
-    this.reader.on('message', (msg: Message) => {
+    this.reader.on('message', async (msg: Message) => {
       try {
         const data = JSON.parse(msg.body.toString());
-        this.logger.log('Mensagem recebida:', data);
+        this.logger.log('Mensagem recebida do NSQ:', data);
 
-        // Aqui você pode processar a mensagem conforme necessário
-        // Por exemplo, emitir um evento ou chamar um serviço
+        // Armazenar mensagem no Redis
+        await this.messageStorage.storeMessage({
+          id: uuidv4(),
+          topic: this.topic,
+          channel: this.channel,
+          data,
+          receivedAt: new Date().toISOString(),
+          attempts: msg.attempts,
+        });
 
         // Confirma o processamento
         msg.finish();
@@ -41,7 +55,7 @@ export class NsqConsumer implements OnModuleInit, OnModuleDestroy {
       this.logger.error('Erro no Reader:', err);
     });
 
-    this.logger.log(`NSQ Consumer conectado - Topic: ${topic}, Channel: ${channel}`);
+    this.logger.log(`NSQ Consumer conectado - Topic: ${this.topic}, Channel: ${this.channel}`);
   }
 
   onModuleDestroy() {
